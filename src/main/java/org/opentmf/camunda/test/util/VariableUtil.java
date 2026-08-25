@@ -1,12 +1,15 @@
 package org.opentmf.camunda.test.util;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.cibseven.bpm.client.variable.impl.TypedValueField;
 
 /**
  * @author Gokhan Demir
  */
-public class VariableUtil {
+public final class VariableUtil {
+
+  private VariableUtil() {}
 
   /**
    * If the sent string is null or less than 4000 bytes, returns the string, otherwise
@@ -24,10 +27,10 @@ public class VariableUtil {
     var typedValueField = new TypedValueField();
     typedValueField.setType("Object");
     typedValueField.setValue(s);
-    typedValueField.setValueInfo(new HashMap<>() {{
-      put("objectTypeName", String.class.getName());
-      put("serializationDataFormat", "application/json");
-    }});
+    Map<String, Object> valueInfo = new HashMap<>();
+    valueInfo.put("objectTypeName", String.class.getName());
+    valueInfo.put("serializationDataFormat", "application/json");
+    typedValueField.setValueInfo(valueInfo);
     return typedValueField;
   }
 }

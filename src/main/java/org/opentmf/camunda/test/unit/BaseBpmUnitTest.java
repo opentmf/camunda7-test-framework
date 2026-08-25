@@ -21,7 +21,8 @@ import org.cibseven.bpm.engine.variable.Variables;
  * @author Yusuf Bozkurt
  */
 public abstract class BaseBpmUnitTest {
-  private final String JSON_SERIALIZATION_FORMAT = Variables.SerializationDataFormats.JSON.getName();
+  private static final String JSON_SERIALIZATION_FORMAT =
+      Variables.SerializationDataFormats.JSON.getName();
   private final ValueMappers<?> valueMappers = buildValueMappers();
   private final TypedValues typedValues = new TypedValues(valueMappers);
 

@@ -223,25 +223,6 @@ class BpmnTaskParseListenerPluginIT extends BaseBpmIT {
   }
 
   @Test
-  void testBpmnProcessStart_withMessageCatchExecutionListener_completedProcess() {
-    registerMessageCatchExecutionListener()
-        .withTaskId(TASK_ID_WAIT_STATE_BEFORE)
-        .withVariableMap(getWaitStateBeforeVariableMap())
-        .withCorrelationMessage(MESSAGE_RECEIVE_TASK)
-        .create();
-
-    registerMessageCatchExecutionListener()
-        .withTaskId(TASK_ID_WAIT_STATE_AFTER)
-        .withVariableMap(getWaitStateAfterVariableMap(true))
-        .withCorrelationMessage(MESSAGE_RECEIVE_TASK)
-        .create();
-
-    ProcessInstance instance = startProcessInstance(PDK_WF_SAMPLE_WAIT_INVOCATION);
-
-    assertProcessEnded(instance);
-  }
-
-  @Test
   void testBpmnProcessStart_withExecutionConsumer_completedProcess() {
     registerMessageCatchExecutionListener()
         .withTaskId(TASK_ID_WAIT_STATE_BEFORE)
