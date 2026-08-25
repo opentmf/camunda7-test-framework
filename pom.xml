@@ -67,7 +67,6 @@
     <cibseven.version>2.2.0</cibseven.version>
     <graalvm.version>25.3.4.1</graalvm.version>
     <camunda7-incident-logger.version>2.0.1</camunda7-incident-logger.version>
-    <awaitility.version>4.2.0</awaitility.version>
     <archunit.version>1.5.0</archunit.version>
     <testcontainers.version>1.21.4</testcontainers.version>
 
@@ -77,7 +76,6 @@
     <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.5.6</maven-failsafe-plugin.version>
     <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
-    <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
     <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
@@ -313,7 +311,6 @@
         <artifactId>maven-release-plugin</artifactId>
         <version>${maven-release-plugin.version}</version>
         <configuration>
-          <useReleaseProfile>false</useReleaseProfile>
           <releaseProfiles>release</releaseProfiles>
           <goals>deploy</goals>
         </configuration>
