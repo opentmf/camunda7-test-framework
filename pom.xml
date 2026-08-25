@@ -60,32 +60,35 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
 
-    <spring-boot.version>4.0.6</spring-boot.version>
-    <junit-jupiter.version>6.1.0</junit-jupiter.version>
+    <spring-boot.version>4.1.1</spring-boot.version>
+    <junit-jupiter.version>6.1.3</junit-jupiter.version>
     <opentmf-commons.version>2.2.0</opentmf-commons.version>
 
     <cibseven.version>2.2.0</cibseven.version>
-    <graalvm.version>25.0.3</graalvm.version>
+    <graalvm.version>25.3.4.1</graalvm.version>
     <camunda7-incident-logger.version>2.0.1</camunda7-incident-logger.version>
     <awaitility.version>4.2.0</awaitility.version>
-    <archunit.version>1.4.2</archunit.version>
+    <archunit.version>1.5.0</archunit.version>
     <testcontainers.version>1.21.4</testcontainers.version>
 
     <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
     <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
-    <maven-jar-plugin.version>3.5.0</maven-jar-plugin.version>
+    <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
     <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
     <maven-failsafe-plugin.version>3.5.6</maven-failsafe-plugin.version>
     <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
     <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
     <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-    <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
+    <central-publishing-maven-plugin.version>0.11.0</central-publishing-maven-plugin.version>
     <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
+    <!-- Stable-only filter for ALL versions:display-* goals (property, plugin AND
+         parent updates). Spring publishes M/RC builds to Maven Central. -->
+    <maven.version.ignore>(?i).*-(alpha|beta|m|rc).*,(?i).*-snapshot</maven.version.ignore>
     <!-- scanner 4.x+ defaults to SonarCloud when unset; this repo analyzes on a local server -->
     <sonar.host.url>http://localhost:9000</sonar.host.url>
 

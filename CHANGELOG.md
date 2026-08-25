@@ -64,6 +64,24 @@ All notable changes to this project will be documented in this file.
   On JDK 23 and newer, javac disables implicit annotation processing, so Lombok
   silently stops running and the build fails with dozens of misleading "cannot
   find symbol" errors; the enforcer now names the real cause up front.
+- Updates **Spring Boot to 4.1.1**, JUnit to **6.1.3**, ArchUnit to **1.5.0**,
+  GraalVM to **25.3.4.1**, JaCoCo to **0.8.15**, `maven-jar-plugin` to **3.5.1**
+  and `central-publishing-maven-plugin` to **0.11.0**.
+- A `maven.version.ignore` property now filters pre-release qualifiers for every
+  `versions:display-*` goal, so `display-property-updates` and
+  `display-plugin-updates` no longer propose milestone or beta builds without a
+  command-line flag.
+
+### Security
+
+- The Spring Boot **4.1.1** upgrade clears **15 HIGH/CRITICAL CVEs** that reached
+  consumers transitively under 2.0.2's Spring Boot 4.0.6: six in
+  `tomcat-embed-core` (11.0.21 → 11.0.24, including three CRITICAL — HTTP/2
+  header validation, digest-authentication bypass and an improper-authorization
+  bypass), six across Jackson 2.x/3.x (2.21.2 → 2.21.5, 3.1.2 → 3.1.5, covering
+  two arbitrary-code-execution advisories in `jackson-databind`), two in
+  `httpcore5` (5.3.6 → 5.4.3) and one SpEL denial-of-service in
+  `spring-expression` (7.0.7 → 7.0.9).
 
 ## [2.0.2] - 2026-06-01
 
