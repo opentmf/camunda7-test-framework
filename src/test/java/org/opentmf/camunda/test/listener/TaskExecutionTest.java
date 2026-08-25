@@ -147,7 +147,6 @@ class TaskExecutionTest {
   @Test
   void test_withCount_registersMultipleTimes() {
     String activityId = "countTaskId";
-    String eventName = "start";
 
     CamundaExpectationUtil.registerTaskExecutionListener()
         .withEventType(EventType.START)
@@ -169,19 +168,11 @@ class TaskExecutionTest {
 
   @Test
   void test_withCount_throwsOnInvalidCount() {
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            CamundaExpectationUtil.registerTaskExecutionListener()
-                .withTaskId("test")
-                .withCount(0));
+    var zeroBuilder = CamundaExpectationUtil.registerTaskExecutionListener().withTaskId("test");
+    assertThrows(IllegalArgumentException.class, () -> zeroBuilder.withCount(0));
 
-    assertThrows(
-        IllegalArgumentException.class,
-        () ->
-            CamundaExpectationUtil.registerTaskExecutionListener()
-                .withTaskId("test")
-                .withCount(-1));
+    var negativeBuilder = CamundaExpectationUtil.registerTaskExecutionListener().withTaskId("test");
+    assertThrows(IllegalArgumentException.class, () -> negativeBuilder.withCount(-1));
   }
 
   @Test

@@ -19,14 +19,10 @@ class EngineOutageFilterTest {
 
   private final EngineOutageFilter filter = new EngineOutageFilter();
 
+  /** Chaos state is engine-global: clear it on both sides so nothing leaks in or out. */
   @BeforeEach
-  void cleanState() {
-    EngineOutage.reset();
-    ExternalTaskProbe.reset();
-  }
-
   @AfterEach
-  void disarm() {
+  void cleanState() {
     EngineOutage.reset();
     ExternalTaskProbe.reset();
   }

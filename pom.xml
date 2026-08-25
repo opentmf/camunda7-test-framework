@@ -85,6 +85,9 @@
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
+    <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
+    <!-- scanner 4.x+ defaults to SonarCloud when unset; this repo analyzes on a local server -->
+    <sonar.host.url>http://localhost:9000</sonar.host.url>
 
     <!-- temporarily managed dependencies -->
     <java-uuid-generator.version>5.2.0</java-uuid-generator.version>
@@ -325,6 +328,10 @@
           </execution>
           <execution>
             <id>report</id>
+            <!-- post-integration-test, NOT the default verify: failsafe ITs run in
+                 integration-test, and the sonar profile's scan fires in verify — this ordering
+                 keeps IT coverage in the XML the scanner reads. -->
+            <phase>post-integration-test</phase>
             <goals>
               <goal>report</goal>
             </goals>
@@ -428,6 +435,28 @@
               <publishingServerId>publish-to-central</publishingServerId>
               <autoPublish>true</autoPublish>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <!-- Local SonarQube analysis: mvn -Psonar clean verify -->
+      <id>sonar</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonarsource.scanner.maven</groupId>
+            <artifactId>sonar-maven-plugin</artifactId>
+            <version>${sonar-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>sonar</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sonar</goal>
+                </goals>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

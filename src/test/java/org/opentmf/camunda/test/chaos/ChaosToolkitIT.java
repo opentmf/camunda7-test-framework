@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opentmf.camunda.test.util.CamundaExpectationUtil.registerTaskExecutionListener;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.cibseven.bpm.engine.ProcessEngineException;
 import org.cibseven.bpm.engine.runtime.Job;
@@ -141,17 +142,18 @@ class ChaosToolkitIT extends BaseBpmIT {
     assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_LOCK_ARENA));
 
     var taskForA = LockSteward.lockAs("worker-A", TOPIC_LOCK_ARENA);
-    LockSteward.expireLock(taskForA.getId());
+    String contestedTaskId = taskForA.getId();
+    LockSteward.expireLock(contestedTaskId);
     var taskForB = LockSteward.stealAs("worker-B", TOPIC_LOCK_ARENA);
-    assertEquals(taskForA.getId(), taskForB.getId());
+    assertEquals(contestedTaskId, taskForB.getId());
 
+    var externalTaskService = BpmnAwareTests.externalTaskService();
+    Map<String, Object> noVariables = Map.of();
     assertThrows(
         ProcessEngineException.class,
-        () ->
-            BpmnAwareTests.externalTaskService()
-                .complete(taskForA.getId(), "worker-A", java.util.Map.of()));
+        () -> externalTaskService.complete(contestedTaskId, "worker-A", noVariables));
 
-    BpmnAwareTests.externalTaskService().complete(taskForB.getId(), "worker-B", java.util.Map.of());
+    externalTaskService.complete(contestedTaskId, "worker-B", noVariables);
     assertProcessEnded(instance);
   }
 }

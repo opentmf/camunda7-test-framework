@@ -46,9 +46,16 @@ All notable changes to this project will be documented in this file.
   window (Awaitility `during`). The load-bearing assertion of chaos tests.
 - `BaseBpmIT.beforeEach` now also resets outage/probe/clock state, so chaos
   never leaks between tests.
+- A `sonar` Maven profile: `mvn -Psonar clean verify` runs the full suite and
+  a SonarQube analysis against a local server in one command. The JaCoCo
+  `report` goal moved from its default `verify` phase to
+  `post-integration-test` so the scan sees integration-test coverage.
 
 ### Changed
 
+- `VariableUtil` is now `final` with a private constructor. It only ever held
+  static helpers, so the implicit public constructor was never meaningful — but
+  code that instantiated or subclassed it will no longer compile.
 - `assertIncidentCreated` polls every 1s instead of every 10s — an incident
   that lands in the first second no longer costs a ten-second wait per
   assertion.

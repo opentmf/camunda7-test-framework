@@ -35,6 +35,9 @@ import org.cibseven.bpm.engine.impl.util.ClockUtil;
  *
  * @author Yusuf BOZKURT
  */
+// java.util.Date is not a choice here: ClockUtil's whole API (setCurrentTime/getCurrentTime/
+// offset) speaks Date and offers no java.time overload. The Date usage is confined to that
+// boundary — this class's own surface is Instant/Duration throughout.
 public final class EngineClock {
 
   private static long offsetMillis;
