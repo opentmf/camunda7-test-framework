@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2026-11-21
+
+### Changed
+
+- **CibSeven 3.0.0** (was 2.2.0). The embedded engine, the REST and external-task-client
+  starters, Spin and the assert library now come from the 3.0.0 line, which is based on
+  Spring Boot 4 and Jackson 3.
+  - The starters are referenced by their plain names
+    (`cibseven-bpm-spring-boot-starter-rest`, `cibseven-bpm-spring-boot-starter-external-task-client`);
+    the `-4` names are relocation pointers in 3.0.0 and will be removed upstream.
+  - `org.cibseven.bpm:cibseven-bom` is imported ahead of Spring Boot, so every CibSeven
+    artifact (including the engine that `camunda7-incident-logger` brings transitively) resolves
+    to the same version, and `json-path` resolves to the 3.x line that Spin needs on Jackson 3.
+  - `BaseBpmUnitTest` builds its JSON data format with a Jackson 3 `JsonMapper`; dates are still
+    written as ISO-8601 strings. Its public and protected API is unchanged.
+  - **Consumers must be on a CibSeven 3.0.0 client.** A service still on a 2.2.0 client (the `-4`
+    starters at 2.2.0) ends up with both lines on its test classpath and fails with duplicate
+    classes or `NoSuchMethodError`; stay on 2.1.0 until the service moves to 3.0.0.
+
 ## [2.1.0] - 2026-08-25
 
 ### Added

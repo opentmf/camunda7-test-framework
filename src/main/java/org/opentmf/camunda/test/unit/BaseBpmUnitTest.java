@@ -1,9 +1,6 @@
 package org.opentmf.camunda.test.unit;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.cibseven.bpm.client.task.impl.ExternalTaskImpl;
@@ -14,6 +11,8 @@ import org.cibseven.bpm.client.variable.impl.ValueMappers;
 import org.cibseven.bpm.client.variable.impl.format.json.JacksonJsonDataFormat;
 import org.cibseven.bpm.client.variable.impl.mapper.*;
 import org.cibseven.bpm.engine.variable.Variables;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Unit tests can inherit from this class and call buildExternalTask method.
@@ -58,9 +57,9 @@ public abstract class BaseBpmUnitTest {
     mappers.addMapper(new LongValueMapper());
     mappers.addMapper(new ShortValueMapper());
     mappers.addMapper(new DoubleValueMapper());
-    var objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JavaTimeModule());
-    objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    // java.time support is built into Jackson 3; dates stay ISO-8601 strings
+    var objectMapper =
+        JsonMapper.builder().disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS).build();
     mappers.addMapper(new ObjectValueMapper(
         "application/json",
         new JacksonJsonDataFormat("json", objectMapper)));
