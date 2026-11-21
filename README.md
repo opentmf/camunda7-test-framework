@@ -18,7 +18,7 @@ Our Camunda-7 Test Framework makes it very easy to write an integration test for
 - Before a flow is started, you should provide your expectations for each task. An expectation can be a mock-server expectation or providing some initial data in a database table. 
 - Useful methods to assert whether the test is successful or failed are provided and should be used in the final stage of the test method.
 
-> **Note:** Starting with version 2.0.0, this library uses [CibSeven](https://github.com/cibseven/cibseven) (a community fork of Camunda 7) as its embedded engine. CibSeven is API-compatible with Camunda 7.24.0 and shares the same database schema and REST API. Since this is a test-scoped library, CibSeven artifacts do not affect the runtime classpath of consuming microservices.
+> **Note:** Starting with version 2.0.0, this library uses [CibSeven](https://github.com/cibseven/cibseven) (a community fork of Camunda 7) as its embedded engine. CibSeven is API-compatible with Camunda 7.24.0 and shares the same database schema and REST API. Since this is a test-scoped library, CibSeven artifacts do not affect the runtime classpath of consuming microservices. Starting with version 2.1.1 it uses CibSeven 3.0.0 (Spring Boot 4, Jackson 3); the consuming service's own CibSeven client must be on 3.0.0 as well, so a service still on a 2.2.0 client stays on 2.1.0.
 
 ## Usage
 
