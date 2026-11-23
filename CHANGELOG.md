@@ -23,6 +23,9 @@ All notable changes to this project will be documented in this file.
 - `BaseBpmUnitTest.camundaProcessId` is now taken from a JVM-wide counter instead of a random
   generator: still ten numeric digits, now guaranteed unique per test instance and increasing in
   creation order. Tests that only read the field are unaffected.
+- **Spring Boot 4.2.0** (was 4.1.1), GraalVM polyglot/JS 25.5.5.0.3 (was 25.3.4.1), ArchUnit 1.5.1;
+  build plugins: compiler 3.16.0, deploy 3.2.0, enforcer 3.7.0, surefire/failsafe 3.6.1,
+  JaCoCo 0.8.16, sonar-maven-plugin 5.9.0.7382, central-publishing 0.12.0.
 
 ## [2.1.0] - 2026-08-25
 
