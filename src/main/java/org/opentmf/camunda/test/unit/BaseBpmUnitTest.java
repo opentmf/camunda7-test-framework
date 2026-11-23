@@ -2,7 +2,7 @@ package org.opentmf.camunda.test.unit;
 
 
 import java.util.Map;
-import org.apache.commons.lang3.RandomStringUtils;
+import java.util.concurrent.atomic.AtomicLong;
 import org.cibseven.bpm.client.task.impl.ExternalTaskImpl;
 import org.cibseven.bpm.client.variable.impl.DefaultValueMappers;
 import org.cibseven.bpm.client.variable.impl.TypedValueField;
@@ -20,12 +20,16 @@ import tools.jackson.databind.json.JsonMapper;
  * @author Yusuf Bozkurt
  */
 public abstract class BaseBpmUnitTest {
+  /** Source of fake process-instance ids: ten numeric digits, unique per test instance. */
+  private static final AtomicLong PROCESS_ID_SEQUENCE = new AtomicLong(1_000_000_000L);
+
   private static final String JSON_SERIALIZATION_FORMAT =
       Variables.SerializationDataFormats.JSON.getName();
   private final ValueMappers<?> valueMappers = buildValueMappers();
   private final TypedValues typedValues = new TypedValues(valueMappers);
 
-  protected final String camundaProcessId = RandomStringUtils.insecure().nextNumeric(10);
+  protected final String camundaProcessId =
+      String.valueOf(PROCESS_ID_SEQUENCE.getAndIncrement());
 
   protected ExternalTaskImpl buildExternalTask(Map<String, Object> variableMap) {
     Map<String, TypedValueField> typedValueFields = getTypedValueFieldMap(variableMap);
