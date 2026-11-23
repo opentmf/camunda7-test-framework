@@ -20,6 +20,9 @@ All notable changes to this project will be documented in this file.
   - **Consumers must be on a CibSeven 3.0.0 client.** A service still on a 2.2.0 client (the `-4`
     starters at 2.2.0) ends up with both lines on its test classpath and fails with duplicate
     classes or `NoSuchMethodError`; stay on 2.1.0 until the service moves to 3.0.0.
+- `BaseBpmUnitTest.camundaProcessId` is now taken from a JVM-wide counter instead of a random
+  generator: still ten numeric digits, now guaranteed unique per test instance and increasing in
+  creation order. Tests that only read the field are unaffected.
 
 ## [2.1.0] - 2026-08-25
 
