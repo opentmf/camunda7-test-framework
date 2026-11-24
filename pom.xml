@@ -65,7 +65,7 @@
     <opentmf-commons.version>2.2.0</opentmf-commons.version>
 
     <cibseven.version>3.0.0</cibseven.version>
-    <graalvm.version>25.5.5.0.3</graalvm.version>
+    <graalvm.version>25.6.5.1</graalvm.version>
     <camunda7-incident-logger.version>2.0.1</camunda7-incident-logger.version>
     <archunit.version>1.5.1</archunit.version>
     <testcontainers.version>1.21.4</testcontainers.version>

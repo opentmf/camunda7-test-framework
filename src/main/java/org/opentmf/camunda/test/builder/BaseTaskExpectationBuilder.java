@@ -93,7 +93,7 @@ import org.cibseven.bpm.engine.delegate.DelegateExecution;
  *
  * - **Reusability:** Provides a reusable contract for task configuration across different types of
  * tasks. - **Code Cleanliness:** Encourages method chaining to reduce repetitive boilerplate code.
- * - **Extensibility:** Generic type parameter (`T extends BaseTaskExpectationBuilder<T>`) allows
+ * - **Extensibility:** Generic type parameter ({@code T extends BaseTaskExpectationBuilder<T>}) allows
  * for specialized implementations without breaking the fluent API pattern.
  *
  * <h2>Extending the Interface</h2>

@@ -34,9 +34,14 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class EngineOutage implements AutoCloseable {
 
-  private static final AtomicReference<OutageScope> ACTIVE = new AtomicReference<>();
+  /** The outage in force, or {@code null}: the INSTANCE, so that only its owner can end it. */
+  private static final AtomicReference<EngineOutage> ACTIVE = new AtomicReference<>();
 
-  private EngineOutage() {}
+  private final OutageScope scope;
+
+  private EngineOutage(OutageScope scope) {
+    this.scope = scope;
+  }
 
   /** Begins a full outage — every {@code /engine-rest} request is refused until {@link #close()}. */
   public static EngineOutage begin() {
@@ -45,18 +50,20 @@ public final class EngineOutage implements AutoCloseable {
 
   /** Begins an outage limited to the given scope. Fails fast if one is already active. */
   public static EngineOutage begin(OutageScope scope) {
-    if (!ACTIVE.compareAndSet(null, scope)) {
+    EngineOutage outage = new EngineOutage(scope);
+    if (!ACTIVE.compareAndSet(null, outage)) {
       throw new IllegalStateException(
           "An engine outage is already active (scope "
-              + ACTIVE.get()
+              + activeScope()
               + ") — end it before beginning another; overlapping outages make a test unreadable");
     }
-    return new EngineOutage();
+    return outage;
   }
 
   /** The scope in force, or {@code null} when the engine is reachable. */
   public static OutageScope activeScope() {
-    return ACTIVE.get();
+    EngineOutage active = ACTIVE.get();
+    return active == null ? null : active.scope;
   }
 
   /** Whether any outage is currently in force. */
@@ -72,9 +79,13 @@ public final class EngineOutage implements AutoCloseable {
     ACTIVE.set(null);
   }
 
-  /** Ends this outage — the engine's REST surface answers again. Idempotent. */
+  /**
+   * Ends this outage — the engine's REST surface answers again. Idempotent, and it ends only THIS
+   * outage: once this one has ended (closed, or disarmed by {@link #reset()}), closing it again
+   * leaves an outage begun since then in force.
+   */
   @Override
   public void close() {
-    ACTIVE.set(null);
+    ACTIVE.compareAndSet(this, null);
   }
 }

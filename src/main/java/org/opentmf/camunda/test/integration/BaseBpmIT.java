@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import org.awaitility.core.ConditionTimeoutException;
 import org.cibseven.bpm.engine.ProcessEngineException;
 import org.cibseven.bpm.engine.RepositoryService;
 import org.cibseven.bpm.engine.RuntimeService;
@@ -133,8 +135,8 @@ public abstract class BaseBpmIT implements BpmIT {
    * start, an internal default method will supply an empty map.
    *
    * <p>The process instance is immediately kicked off using the `runtimeService`, and then all
-   * registered receive task listeners (if any) are triggered via the {@link
-   * ReceiveTaskManager#getInstance().runAll()} method. This ensures proper testing and simulation
+   * registered receive task listeners (if any) are triggered via {@code
+   * ReceiveTaskManager.getInstance().runAll()}. This ensures proper testing and simulation
    * of scenarios that involve receive tasks.
    *
    * <p><strong>Example Usage:</strong>
@@ -165,7 +167,7 @@ public abstract class BaseBpmIT implements BpmIT {
    * of BPMN workflows with custom input variables.
    *
    * <p>This method uses the {@code runtimeService} to trigger a new process instance. Once the
-   * process is started, it invokes the {@link ReceiveTaskManager#getInstance().runAll()} method to
+   * process is started, it invokes {@code ReceiveTaskManager.getInstance().runAll()} to
    * handle any receive tasks that may be part of the workflow, ensuring the full simulation of the
    * process execution environment.
    *
@@ -316,6 +318,27 @@ public abstract class BaseBpmIT implements BpmIT {
    * <p>This utility is typically used in end-to-end testing scenarios to verify that the system
    * successfully triggers incidents under specific circumstances.
    *
+   * <p><strong>Execution Details:</strong>
+   *
+   * <ul>
+   *   <li>Polls every second to query incidents related to the provided process instance.
+   *   <li>Continues polling for a maximum duration of 120 seconds.
+   *   <li>Checks if the incident list is not empty to confirm incident creation.
+   *   <li>If an `incidentMessage` is provided, ensures that at least one incident's message
+   *       contains the specified string.
+   * </ul>
+   *
+   * <p><strong>Usage Example:</strong>
+   *
+   * <pre>
+   * // Example process instance and incident message
+   * ProcessInstance instance = startTestProcess();
+   * String expectedMessage = "critical error";
+   *
+   * // Perform the assertion
+   * assertIncidentCreated(instance, expectedMessage);
+   * </pre>
+   *
    * @param processInstance The {@link ProcessInstance} for which incidents are being verified.
    *     Represents the process in the workflow engine. Must not be null.
    * @param incidentMessage The expected message of the incident. If null, the method will only
@@ -324,24 +347,6 @@ public abstract class BaseBpmIT implements BpmIT {
    * @throws IllegalArgumentException If the `processInstance` is null.
    * @throws AssertionError If no incident is created within the polling duration, or if no incident
    *     contains the expected `incidentMessage` when provided.
-   *     <h3>Execution Details:</h3>
-   *     <ul>
-   *       <li>Polls every 10 seconds to query incidents related to the provided process instance.
-   *       <li>Continues polling for a maximum duration of 120 seconds.
-   *       <li>Checks if the incident list is not empty to confirm incident creation.
-   *       <li>If an `incidentMessage` is provided, ensures that at least one incident's message
-   *           contains the specified string.
-   *     </ul>
-   *     <h3>Usage Example:</h3>
-   *     <pre>
-   * // Example process instance and incident message
-   * ProcessInstance instance = startTestProcess();
-   * String expectedMessage = "critical error";
-   *
-   * // Perform the assertion
-   * assertIncidentCreated(instance, expectedMessage);
-   * </pre>
-   *     </ul>
    */
   protected final void assertIncidentCreated(
       ProcessInstance processInstance, String incidentMessage) {
@@ -370,15 +375,15 @@ public abstract class BaseBpmIT implements BpmIT {
    * String)} and calls it with a `null` message, meaning it only checks for the presence of an
    * incident without verifying its content.
    *
-   * <h3>Execution Details:</h3>
+   * <p><strong>Execution Details:</strong>
    *
    * <ul>
-   *   <li>Polls every 10 seconds to query incidents related to the provided process instance.
+   *   <li>Polls every second to query incidents related to the provided process instance.
    *   <li>Continues polling for a maximum duration of 120 seconds.
    *   <li>Ensures that at least one incident exists for the process instance.
    * </ul>
    *
-   * <h3>Usage Example:</h3>
+   * <p><strong>Usage Example:</strong>
    *
    * <pre>
    * // Example process instance
@@ -418,14 +423,51 @@ public abstract class BaseBpmIT implements BpmIT {
    *     null.
    * @param window how long the instance must remain incident-free. Choose it longer than at least
    *     one client poll cycle, or the assertion proves nothing about the worker's behavior.
-   * @throws AssertionError if any incident appears within the window.
+   * @throws ConditionTimeoutException if any incident appears within the window. Its message
+   *     names each incident seen (type, activity, message); the waiting library's own timeout is
+   *     its cause.
    */
   protected final void assertNoIncidentRaised(ProcessInstance processInstance, Duration window) {
-    await("assertNoIncidentRaised")
-        .pollInterval(250, TimeUnit.MILLISECONDS)
-        .during(window)
-        .atMost(window.plusSeconds(10))
-        .until(() -> queryIncidents(processInstance).isEmpty());
+    AtomicReference<List<Incident>> seen = new AtomicReference<>(List.of());
+    try {
+      await("assertNoIncidentRaised")
+          .pollInterval(250, TimeUnit.MILLISECONDS)
+          .during(window)
+          .atMost(window.plusSeconds(10))
+          .until(
+              () -> {
+                List<Incident> incidents = queryIncidents(processInstance);
+                if (!incidents.isEmpty()) {
+                  seen.set(incidents);
+                }
+                return incidents.isEmpty();
+              });
+    } catch (ConditionTimeoutException timeout) {
+      List<Incident> incidents = seen.get();
+      if (incidents.isEmpty()) {
+        throw timeout;
+      }
+      throw new ConditionTimeoutException(
+          "Expected no incident for process instance "
+              + processInstance.getId()
+              + " within "
+              + window
+              + ", but "
+              + incidents.size()
+              + " appeared: "
+              + String.join("; ", incidents.stream().map(BaseBpmIT::describe).toList()),
+          timeout);
+    }
+  }
+
+  private static String describe(Incident incident) {
+    return "[type="
+        + incident.getIncidentType()
+        + ", activity="
+        + incident.getActivityId()
+        + ", message="
+        + incident.getIncidentMessage()
+        + "]";
   }
 
   private List<Incident> queryIncidents(ProcessInstance instance) {

@@ -86,6 +86,20 @@ class EngineOutageFilterTest {
   }
 
   @Test
+  void anEarlierOutageClosedLate_doesNotReopenTheEngine() {
+    ContainerRequestContext anyCall = request("GET", "process-definition/count");
+    EngineOutage first = EngineOutage.begin();
+    first.close();
+    try (EngineOutage second = EngineOutage.begin()) {
+      first.close();
+      filter.filter(anyCall);
+    }
+
+    Response aborted = capturedAbort(anyCall);
+    assertEquals(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), aborted.getStatus());
+  }
+
+  @Test
   void refusedAttemptsAreStillCounted() {
     ContainerRequestContext fetch = request("POST", "external-task/fetchAndLock");
     try (EngineOutage outage = EngineOutage.begin()) {

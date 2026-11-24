@@ -23,9 +23,19 @@ All notable changes to this project will be documented in this file.
 - `BaseBpmUnitTest.camundaProcessId` is now taken from a JVM-wide counter instead of a random
   generator: still ten numeric digits, now guaranteed unique per test instance and increasing in
   creation order. Tests that only read the field are unaffected.
-- **Spring Boot 4.2.0** (was 4.1.1), GraalVM polyglot/JS 25.5.5.0.3 (was 25.3.4.1), ArchUnit 1.5.1;
+- **Spring Boot 4.2.0** (was 4.1.1), GraalVM polyglot/JS 25.6.5.1 (was 25.3.4.1), ArchUnit 1.5.1;
   build plugins: compiler 3.16.0, deploy 3.2.0, enforcer 3.7.0, surefire/failsafe 3.6.1,
   JaCoCo 0.8.16, sonar-maven-plugin 5.9.0.7382, central-publishing 0.12.0.
+
+### Fixed
+
+- `EngineOutage.close()` ends only its own outage. Before, an outage closed late (closed twice,
+  or after `EngineOutage.reset()`) also ended an outage begun after it, so a test that believed
+  the engine was down ran against a live engine. `reset()` still ends whatever outage is active.
+- `BaseBpmIT.assertNoIncidentRaised` now names the incidents it saw (type, activity, message)
+  when it fails. Before, the failure carried only the waiting library's generic timeout text. The
+  thrown type is unchanged: Awaitility's `ConditionTimeoutException`, which the javadoc wrongly
+  gave as `AssertionError`; it now has the original timeout as its cause.
 
 ## [2.1.0] - 2026-08-25
 
