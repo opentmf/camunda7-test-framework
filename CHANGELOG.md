@@ -31,6 +31,12 @@ All notable changes to this project will be documented in this file.
   old total is available as the new `ExternalTaskProbe.taskCount(topic)`. A test that reads
   `queueDepth` while a worker holds the task now sees a lower number; a test that reads it before
   any lock is taken, or during an engine outage, sees the same number as before.
+- **An engine outage now refuses with a JSON body.** `EngineOutageFilter` still answers
+  `503 Service Unavailable` to the same requests, but the body is now
+  `{"type":"EngineOutage","message":"engine outage simulated by EngineOutage"}` with
+  `Content-Type: application/json` (it was plain text). The external-task client parses it, so a
+  refused poll is logged as a 503 carrying that message instead of a JSON parse failure. A test
+  that reads the 503's body as plain text sees the JSON instead.
 
 ### Fixed
 

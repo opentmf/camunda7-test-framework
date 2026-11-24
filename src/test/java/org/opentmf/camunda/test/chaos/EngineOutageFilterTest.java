@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.junit.jupiter.api.AfterEach;
@@ -46,6 +47,20 @@ class EngineOutageFilterTest {
 
     Response aborted = capturedAbort(anyCall);
     assertEquals(Response.Status.SERVICE_UNAVAILABLE.getStatusCode(), aborted.getStatus());
+  }
+
+  @Test
+  void refusal_carriesTheEnginesJsonErrorShape() {
+    ContainerRequestContext fetch = request("POST", "external-task/fetchAndLock");
+    try (EngineOutage outage = EngineOutage.begin()) {
+      filter.filter(fetch);
+    }
+
+    Response aborted = capturedAbort(fetch);
+    assertEquals(MediaType.APPLICATION_JSON_TYPE, aborted.getMediaType());
+    assertEquals(
+        "{\"type\":\"EngineOutage\",\"message\":\"engine outage simulated by EngineOutage\"}",
+        aborted.getEntity());
   }
 
   @Test

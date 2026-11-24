@@ -2,6 +2,7 @@ package org.opentmf.camunda.test.chaos;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opentmf.camunda.test.util.CamundaExpectationUtil.registerTaskExecutionListener;
@@ -15,10 +16,13 @@ import org.cibseven.bpm.engine.runtime.ProcessInstance;
 import org.awaitility.core.ConditionTimeoutException;
 import org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.opentmf.camunda.test.clock.EngineClock;
 import org.opentmf.camunda.test.integration.BaseBpmIT;
 import org.opentmf.camunda.test.lock.LockSteward;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 /**
  * The chaos toolkit proven against a live embedded engine and a REAL external-task client:
@@ -46,10 +50,12 @@ class ChaosToolkitIT extends BaseBpmIT {
   /**
    * The N-5 shape, in-process: while the engine is "down" the worker raises no incident and KEEPS
    * polling (the queue a production autoscaler watches stays visible and non-empty); the moment
-   * the engine is back, the task is worked and the process runs to its end.
+   * the engine is back, the task is worked and the process runs to its end. A refused poll is
+   * logged by the client as a refusal, not as a body it could not parse.
    */
   @Test
-  void engineOutage_workerKeepsPollingRaisesNothing_andRecovers() {
+  @ExtendWith(OutputCaptureExtension.class)
+  void engineOutage_workerKeepsPollingRaisesNothing_andRecovers(CapturedOutput output) {
     validateDeployment(PDK_EXTERNAL_PROBE);
 
     ProcessInstance instance;
@@ -69,6 +75,10 @@ class ChaosToolkitIT extends BaseBpmIT {
       assertNoIncidentRaised(instance, Duration.ofSeconds(3));
       assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_CHAOS_PROBE));
     }
+
+    String log = output.getAll();
+    assertFalse(log.contains("TASK/CLIENT-02004"), "the client could not parse the refusal's body");
+    assertFalse(log.contains("Unrecognized token"), "the refusal's body is not JSON");
 
     assertProcessEnded(instance);
   }

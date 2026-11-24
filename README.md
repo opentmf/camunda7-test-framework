@@ -218,7 +218,9 @@ framework's existing extension points and is a complete pass-through until a tes
 
 Makes the engine's REST surface answer `503 Service Unavailable` while the engine itself keeps
 running: exactly what an external-task worker sees when the engine pod dies, and instantly
-reversible.
+reversible. The 503 carries the engine's JSON error shape
+(`{"type":"EngineOutage","message":"engine outage simulated by EngineOutage"}`), so the client
+logs a refused request as a 503 with that message, not as a body it could not parse.
 
 ```java
 ProcessInstance instance;
