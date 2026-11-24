@@ -27,6 +27,12 @@ All notable changes to this project will be documented in this file.
   build plugins: compiler 3.16.0, deploy 3.2.0, enforcer 3.7.0, surefire/failsafe 3.6.1,
   JaCoCo 0.8.16, sonar-maven-plugin 5.9.0.7382, central-publishing 0.12.0.
 
+### Fixed
+
+- `EngineOutage.close()` ends only its own outage. Before, an outage closed late (closed twice,
+  or after `EngineOutage.reset()`) also ended an outage begun after it, so a test that believed
+  the engine was down ran against a live engine. `reset()` still ends whatever outage is active.
+
 ## [2.1.0] - 2026-08-25
 
 ### Added

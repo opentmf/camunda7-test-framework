@@ -44,6 +44,29 @@ class EngineOutageTest {
   }
 
   @Test
+  void close_ofAnOutageEndedByReset_leavesTheNextOutageInForce() {
+    EngineOutage first = EngineOutage.begin(OutageScope.COMPLETION);
+    EngineOutage.reset();
+    try (EngineOutage second = EngineOutage.begin(OutageScope.FETCH_AND_LOCK)) {
+      first.close();
+      assertTrue(EngineOutage.isActive());
+      assertEquals(OutageScope.FETCH_AND_LOCK, EngineOutage.activeScope());
+    }
+    assertFalse(EngineOutage.isActive());
+  }
+
+  @Test
+  void secondClose_ofAnEndedOutage_leavesTheNextOutageInForce() {
+    EngineOutage first = EngineOutage.begin();
+    first.close();
+    try (EngineOutage second = EngineOutage.begin(OutageScope.COMPLETION)) {
+      first.close();
+      assertEquals(OutageScope.COMPLETION, EngineOutage.activeScope());
+    }
+    assertFalse(EngineOutage.isActive());
+  }
+
+  @Test
   void reset_disarmsWhateverIsActive() {
     EngineOutage.begin(OutageScope.COMPLETION);
     EngineOutage.reset();
