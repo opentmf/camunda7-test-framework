@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [2.1.1] - 2026-11-21
 
+### Added
+
+- `@CamundaIT`, a meta-annotation carrying `@SpringBootTest(webEnvironment = DEFINED_PORT)`: the
+  supported way to declare an integration test that extends `BaseBpmIT`, so that every IT class
+  shares one application context. Existing `@SpringBootTest` declarations keep working. The
+  library now depends on `spring-boot-test` (managed by Spring Boot) for it.
+
 ### Changed
 
 - **CibSeven 3.0.0** (was 2.2.0). The embedded engine, the REST and external-task-client
@@ -26,6 +33,21 @@ All notable changes to this project will be documented in this file.
 - **Spring Boot 4.2.0** (was 4.1.1), GraalVM polyglot/JS 25.6.5.1 (was 25.3.4.1), ArchUnit 1.5.1;
   build plugins: compiler 3.16.0, deploy 3.2.0, enforcer 3.7.0, surefire/failsafe 3.6.1,
   JaCoCo 0.8.16, sonar-maven-plugin 5.9.0.7382, central-publishing 0.12.0.
+- **`ExternalTaskProbe.queueDepth(topic)` no longer counts locked tasks**, as its javadoc already
+  said: a task a worker holds is not waiting. A task whose lock has expired is counted again. The
+  old total is available as the new `ExternalTaskProbe.taskCount(topic)`. A test that reads
+  `queueDepth` while a worker holds the task now sees a lower number; a test that reads it before
+  any lock is taken, or during an engine outage, sees the same number as before.
+- **An engine outage now refuses with a JSON body.** `EngineOutageFilter` still answers
+  `503 Service Unavailable` to the same requests, but the body is now
+  `{"type":"EngineOutage","message":"engine outage simulated by EngineOutage"}` with
+  `Content-Type: application/json` (it was plain text). The external-task client parses it, so a
+  refused poll is logged as a 503 carrying that message instead of a JSON parse failure. A test
+  that reads the 503's body as plain text sees the JSON instead.
+- The library now builds on **Java 17 through 25** (it was 17.x only). Lombok is on the
+  compiler's annotation processor path, which javac 23+ requires, and the code is compiled with
+  `--release 17`, so the jar still runs on Java 17 whichever JDK builds it. The enforcer accepts
+  `[17,26)`; the Maven range stays `[3.9,3.10)`.
 
 ### Fixed
 

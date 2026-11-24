@@ -2,6 +2,7 @@ package org.opentmf.camunda.test.chaos;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opentmf.camunda.test.util.CamundaExpectationUtil.registerTaskExecutionListener;
@@ -15,24 +16,21 @@ import org.cibseven.bpm.engine.runtime.ProcessInstance;
 import org.awaitility.core.ConditionTimeoutException;
 import org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.opentmf.camunda.test.clock.EngineClock;
 import org.opentmf.camunda.test.integration.BaseBpmIT;
+import org.opentmf.camunda.test.integration.CamundaIT;
 import org.opentmf.camunda.test.lock.LockSteward;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 /**
  * The chaos toolkit proven against a live embedded engine and a REAL external-task client:
  * outages that starve the client without killing the engine, probes that show the client kept
  * trying, a clock that makes a two-hour timer due in milliseconds, and deterministic lock loss.
  */
-// Same @SpringBootTest attributes as BpmnTaskParseListenerPluginIT ON PURPOSE: the Spring
-// TestContext cache then serves ONE application context (one engine, one job executor) to both
-// classes. A second context on another port shares the same Testcontainers database (identical
-// jdbc:tc URL = same container), and its still-live job executor races this class's jobs — the
-// async ones lose their one-shot expectations to a competitor engine and the suite goes red.
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = "desired.port=8999")
+// @CamundaIT, like every IT here: one application context for all of them (see its javadoc).
+@CamundaIT
 class ChaosToolkitIT extends BaseBpmIT {
 
   private static final String PDK_EXTERNAL_PROBE = "WF_Chaos_ExternalProbe";
@@ -44,12 +42,20 @@ class ChaosToolkitIT extends BaseBpmIT {
   private static final String TASK_ID_SCRIPTED = "scriptedOutcome";
 
   /**
+   * How many refused polls the no-incident claim must span. The client backs off exponentially
+   * under sustained 503s, so a fixed window can pass with no poll in it; a count of polls cannot.
+   */
+  private static final int REFUSED_POLLS = 3;
+
+  /**
    * The N-5 shape, in-process: while the engine is "down" the worker raises no incident and KEEPS
    * polling (the queue a production autoscaler watches stays visible and non-empty); the moment
-   * the engine is back, the task is worked and the process runs to its end.
+   * the engine is back, the task is worked and the process runs to its end. A refused poll is
+   * logged by the client as a refusal, not as a body it could not parse.
    */
   @Test
-  void engineOutage_workerKeepsPollingRaisesNothing_andRecovers() {
+  @ExtendWith(OutputCaptureExtension.class)
+  void engineOutage_workerKeepsPollingRaisesNothing_andRecovers(CapturedOutput output) {
     validateDeployment(PDK_EXTERNAL_PROBE);
 
     ProcessInstance instance;
@@ -60,15 +66,26 @@ class ChaosToolkitIT extends BaseBpmIT {
 
       assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_CHAOS_PROBE));
 
+      // The survival claim is anchored on the client's own refused polls, not on the wall clock:
+      // no incident may appear while the client is refused REFUSED_POLLS times.
+      String instanceId = instance.getId();
       long attemptsAtOutageStart = ExternalTaskProbe.fetchAndLockAttempts();
-      await("client keeps polling through the outage")
-          .pollInterval(500, TimeUnit.MILLISECONDS)
+      await("client keeps polling through the outage and raises nothing")
+          .pollInterval(250, TimeUnit.MILLISECONDS)
           .atMost(90, TimeUnit.SECONDS)
-          .until(() -> ExternalTaskProbe.fetchAndLockAttempts() > attemptsAtOutageStart);
+          .failFast("an incident was raised during the outage", () -> hasIncident(instanceId))
+          .until(
+              () ->
+                  ExternalTaskProbe.fetchAndLockAttempts()
+                      >= attemptsAtOutageStart + REFUSED_POLLS);
 
-      assertNoIncidentRaised(instance, Duration.ofSeconds(3));
+      assertFalse(hasIncident(instanceId), "an incident was raised during the outage");
       assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_CHAOS_PROBE));
     }
+
+    String log = output.getAll();
+    assertFalse(log.contains("TASK/CLIENT-02004"), "the client could not parse the refusal's body");
+    assertFalse(log.contains("Unrecognized token"), "the refusal's body is not JSON");
 
     assertProcessEnded(instance);
   }
@@ -167,7 +184,10 @@ class ChaosToolkitIT extends BaseBpmIT {
 
     var taskForA = LockSteward.lockAs("worker-A", TOPIC_LOCK_ARENA);
     String contestedTaskId = taskForA.getId();
+    assertEquals(0, ExternalTaskProbe.queueDepth(TOPIC_LOCK_ARENA), "a locked task is not waiting");
+    assertEquals(1, ExternalTaskProbe.taskCount(TOPIC_LOCK_ARENA), "but it still exists");
     LockSteward.expireLock(contestedTaskId);
+    assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_LOCK_ARENA), "an expired lock waits again");
     var taskForB = LockSteward.stealAs("worker-B", TOPIC_LOCK_ARENA);
     assertEquals(contestedTaskId, taskForB.getId());
 
@@ -179,5 +199,13 @@ class ChaosToolkitIT extends BaseBpmIT {
 
     externalTaskService.complete(contestedTaskId, "worker-B", noVariables);
     assertProcessEnded(instance);
+  }
+
+  private static boolean hasIncident(String processInstanceId) {
+    return BpmnAwareTests.runtimeService()
+            .createIncidentQuery()
+            .processInstanceId(processInstanceId)
+            .count()
+        > 0;
   }
 }

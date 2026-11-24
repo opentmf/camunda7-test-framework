@@ -28,6 +28,11 @@ import java.util.concurrent.atomic.AtomicReference;
  * framework's registry singletons. {@code BaseBpmIT} disarms any leftover outage in its {@code
  * beforeEach}, and {@code EngineChaosExtension} does the same for tests that do not extend it.
  *
+ * <p><strong>No parallel execution.</strong> Because this state is JVM-global, a test that uses
+ * it must not run concurrently with any other test: mark its class {@code @Isolated} (JUnit's
+ * {@code org.junit.jupiter.api.parallel.Isolated}) when the suite enables JUnit parallel
+ * execution.
+ *
  * @see EngineOutageFilter
  * @see OutageScope
  * @author Yusuf BOZKURT

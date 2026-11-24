@@ -422,7 +422,10 @@ public abstract class BaseBpmIT implements BpmIT {
    * @param processInstance the {@link ProcessInstance} that must stay incident-free. Must not be
    *     null.
    * @param window how long the instance must remain incident-free. Choose it longer than at least
-   *     one client poll cycle, or the assertion proves nothing about the worker's behavior.
+   *     one client poll cycle, or the assertion proves nothing about the worker's behavior. During
+   *     an outage the client backs off exponentially, so its poll cycle grows; to tie the claim to
+   *     the client's polls rather than the clock, wait on {@code
+   *     ExternalTaskProbe.fetchAndLockAttempts()} instead.
    * @throws ConditionTimeoutException if any incident appears within the window. Its message
    *     names each incident seen (type, activity, message); the waiting library's own timeout is
    *     its cause.

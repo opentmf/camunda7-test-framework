@@ -8,6 +8,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.BEFORE_TE
 import org.opentmf.camunda.test.context.CustomManagement;
 import org.opentmf.camunda.test.context.CustomManagementRepository;
 import org.opentmf.camunda.test.integration.BaseBpmIT;
+import org.opentmf.camunda.test.integration.CamundaIT;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -17,7 +18,6 @@ import org.cibseven.bpm.engine.runtime.ProcessInstance;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 
 /**
@@ -30,9 +30,7 @@ import org.springframework.test.context.jdbc.Sql;
  * @author Yusuf Bozkurt
  */
 @Sql(scripts = "classpath:db/create-table.sql", executionPhase = BEFORE_TEST_CLASS)
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = "desired.port=8999")
+@CamundaIT
 class BpmnTaskParseListenerPluginIT extends BaseBpmIT {
 
   private static final String PDK_WF_SAMPLE_WAIT_INVOCATION = "WF_Sample_WaitInvocation";
