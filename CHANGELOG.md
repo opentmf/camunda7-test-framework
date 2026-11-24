@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.1.1] - 2026-11-21
+## [2.2.0] - 2026-11-24
 
 ### Added
 
@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
   - **Consumers must be on a CibSeven 3.0.0 client.** A service still on a 2.2.0 client (the `-4`
     starters at 2.2.0) ends up with both lines on its test classpath and fails with duplicate
     classes or `NoSuchMethodError`; stay on 2.1.0 until the service moves to 3.0.0.
+  - `camunda7-incident-logger` **2.1.0** (was 2.0.1). It is itself built on CibSeven 3.0.0, so a
+    consuming service no longer receives the 2.2.0 engine through it.
 - `BaseBpmUnitTest.camundaProcessId` is now taken from a JVM-wide counter instead of a random
   generator: still ten numeric digits, now guaranteed unique per test instance and increasing in
   creation order. Tests that only read the field are unaffected.
