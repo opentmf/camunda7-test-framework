@@ -48,6 +48,12 @@ class ChaosToolkitIT extends BaseBpmIT {
   private static final String TASK_ID_SCRIPTED = "scriptedOutcome";
 
   /**
+   * How many refused polls the no-incident claim must span. The client backs off exponentially
+   * under sustained 503s, so a fixed window can pass with no poll in it; a count of polls cannot.
+   */
+  private static final int REFUSED_POLLS = 3;
+
+  /**
    * The N-5 shape, in-process: while the engine is "down" the worker raises no incident and KEEPS
    * polling (the queue a production autoscaler watches stays visible and non-empty); the moment
    * the engine is back, the task is worked and the process runs to its end. A refused poll is
@@ -66,13 +72,20 @@ class ChaosToolkitIT extends BaseBpmIT {
 
       assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_CHAOS_PROBE));
 
+      // The survival claim is anchored on the client's own refused polls, not on the wall clock:
+      // no incident may appear while the client is refused REFUSED_POLLS times.
+      String instanceId = instance.getId();
       long attemptsAtOutageStart = ExternalTaskProbe.fetchAndLockAttempts();
-      await("client keeps polling through the outage")
-          .pollInterval(500, TimeUnit.MILLISECONDS)
+      await("client keeps polling through the outage and raises nothing")
+          .pollInterval(250, TimeUnit.MILLISECONDS)
           .atMost(90, TimeUnit.SECONDS)
-          .until(() -> ExternalTaskProbe.fetchAndLockAttempts() > attemptsAtOutageStart);
+          .failFast("an incident was raised during the outage", () -> hasIncident(instanceId))
+          .until(
+              () ->
+                  ExternalTaskProbe.fetchAndLockAttempts()
+                      >= attemptsAtOutageStart + REFUSED_POLLS);
 
-      assertNoIncidentRaised(instance, Duration.ofSeconds(3));
+      assertFalse(hasIncident(instanceId), "an incident was raised during the outage");
       assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_CHAOS_PROBE));
     }
 
@@ -192,5 +205,13 @@ class ChaosToolkitIT extends BaseBpmIT {
 
     externalTaskService.complete(contestedTaskId, "worker-B", noVariables);
     assertProcessEnded(instance);
+  }
+
+  private static boolean hasIncident(String processInstanceId) {
+    return BpmnAwareTests.runtimeService()
+            .createIncidentQuery()
+            .processInstanceId(processInstanceId)
+            .count()
+        > 0;
   }
 }
