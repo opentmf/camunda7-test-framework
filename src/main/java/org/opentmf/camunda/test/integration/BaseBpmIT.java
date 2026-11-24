@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
+import org.awaitility.core.ConditionTimeoutException;
 import org.cibseven.bpm.engine.ProcessEngineException;
 import org.cibseven.bpm.engine.RepositoryService;
 import org.cibseven.bpm.engine.RuntimeService;
@@ -418,14 +420,51 @@ public abstract class BaseBpmIT implements BpmIT {
    *     null.
    * @param window how long the instance must remain incident-free. Choose it longer than at least
    *     one client poll cycle, or the assertion proves nothing about the worker's behavior.
-   * @throws AssertionError if any incident appears within the window.
+   * @throws ConditionTimeoutException if any incident appears within the window. Its message
+   *     names each incident seen (type, activity, message); the waiting library's own timeout is
+   *     its cause.
    */
   protected final void assertNoIncidentRaised(ProcessInstance processInstance, Duration window) {
-    await("assertNoIncidentRaised")
-        .pollInterval(250, TimeUnit.MILLISECONDS)
-        .during(window)
-        .atMost(window.plusSeconds(10))
-        .until(() -> queryIncidents(processInstance).isEmpty());
+    AtomicReference<List<Incident>> seen = new AtomicReference<>(List.of());
+    try {
+      await("assertNoIncidentRaised")
+          .pollInterval(250, TimeUnit.MILLISECONDS)
+          .during(window)
+          .atMost(window.plusSeconds(10))
+          .until(
+              () -> {
+                List<Incident> incidents = queryIncidents(processInstance);
+                if (!incidents.isEmpty()) {
+                  seen.set(incidents);
+                }
+                return incidents.isEmpty();
+              });
+    } catch (ConditionTimeoutException timeout) {
+      List<Incident> incidents = seen.get();
+      if (incidents.isEmpty()) {
+        throw timeout;
+      }
+      throw new ConditionTimeoutException(
+          "Expected no incident for process instance "
+              + processInstance.getId()
+              + " within "
+              + window
+              + ", but "
+              + incidents.size()
+              + " appeared: "
+              + String.join("; ", incidents.stream().map(BaseBpmIT::describe).toList()),
+          timeout);
+    }
+  }
+
+  private static String describe(Incident incident) {
+    return "[type="
+        + incident.getIncidentType()
+        + ", activity="
+        + incident.getActivityId()
+        + ", message="
+        + incident.getIncidentMessage()
+        + "]";
   }
 
   private List<Incident> queryIncidents(ProcessInstance instance) {

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.cibseven.bpm.engine.ProcessEngineException;
 import org.cibseven.bpm.engine.runtime.Job;
 import org.cibseven.bpm.engine.runtime.ProcessInstance;
+import org.awaitility.core.ConditionTimeoutException;
 import org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests;
 import org.junit.jupiter.api.Test;
 import org.opentmf.camunda.test.clock.EngineClock;
@@ -114,6 +115,29 @@ class ChaosToolkitIT extends BaseBpmIT {
     ProcessInstance instance = startProcessInstance(PDK_SCRIPTED);
 
     assertIncidentCreated(instance, "scripted boom");
+  }
+
+  /**
+   * When an incident appears inside the window, the failure names it — its activity and message —
+   * instead of the waiting library's generic timeout text. The thrown type is unchanged.
+   */
+  @Test
+  void assertNoIncidentRaised_namesTheIncidentThatAppeared() {
+    validateDeployment(PDK_SCRIPTED);
+    registerTaskExecutionListener()
+        .withTaskId(TASK_ID_SCRIPTED)
+        .withFailure("scripted boom")
+        .create();
+
+    ProcessInstance instance = startProcessInstance(PDK_SCRIPTED);
+    Duration window = Duration.ofSeconds(5);
+
+    ConditionTimeoutException failure =
+        assertThrows(
+            ConditionTimeoutException.class, () -> assertNoIncidentRaised(instance, window));
+    String message = failure.getMessage();
+    assertTrue(message.contains(TASK_ID_SCRIPTED), message);
+    assertTrue(message.contains("scripted boom"), message);
   }
 
   /** {@code withBpmnError} takes the model's error boundary — the business-failure path. */

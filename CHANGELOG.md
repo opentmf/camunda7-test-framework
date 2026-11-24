@@ -32,6 +32,10 @@ All notable changes to this project will be documented in this file.
 - `EngineOutage.close()` ends only its own outage. Before, an outage closed late (closed twice,
   or after `EngineOutage.reset()`) also ended an outage begun after it, so a test that believed
   the engine was down ran against a live engine. `reset()` still ends whatever outage is active.
+- `BaseBpmIT.assertNoIncidentRaised` now names the incidents it saw (type, activity, message)
+  when it fails. Before, the failure carried only the waiting library's generic timeout text. The
+  thrown type is unchanged: Awaitility's `ConditionTimeoutException`, which the javadoc wrongly
+  gave as `AssertionError`; it now has the original timeout as its cause.
 
 ## [2.1.0] - 2026-08-25
 
