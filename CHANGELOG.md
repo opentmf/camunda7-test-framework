@@ -44,6 +44,10 @@ All notable changes to this project will be documented in this file.
   `Content-Type: application/json` (it was plain text). The external-task client parses it, so a
   refused poll is logged as a 503 carrying that message instead of a JSON parse failure. A test
   that reads the 503's body as plain text sees the JSON instead.
+- The library now builds on **Java 17 through 25** (it was 17.x only). Lombok is on the
+  compiler's annotation processor path, which javac 23+ requires, and the code is compiled with
+  `--release 17`, so the jar still runs on Java 17 whichever JDK builds it. The enforcer accepts
+  `[17,26)`; the Maven range stays `[3.9,3.10)`.
 
 ### Fixed
 

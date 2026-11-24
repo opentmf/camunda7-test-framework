@@ -57,8 +57,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>17</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <maven.compiler.release>${java.version}</maven.compiler.release>
 
     <spring-boot.version>4.2.0</spring-boot.version>
     <junit-jupiter.version>6.1.3</junit-jupiter.version>
@@ -234,11 +233,6 @@
       <plugins>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${maven-compiler-plugin.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
           <version>${maven-jar-plugin.version}</version>
         </plugin>
@@ -250,6 +244,21 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <!-- Lombok on the processor path: from JDK 23 on, javac no longer runs processors it
+               merely finds on the class path. Its version comes from the Spring Boot BOM. -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -267,8 +276,8 @@
                   <message>This project builds with Maven 3.9.x only. Switch your Maven before building.</message>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[17,18)</version>
-                  <message>This project builds with Java 17.x only. On JDK 23+ javac disables implicit annotation processing, so Lombok never runs and the build fails with dozens of misleading "cannot find symbol" errors. Point JAVA_HOME at a 17.x JDK.</message>
+                  <version>[17,26)</version>
+                  <message>This project is proven to build on Java 17 through 25. Point JAVA_HOME at one of those; widen this range only after the whole suite has passed on the newer JDK.</message>
                 </requireJavaVersion>
               </rules>
             </configuration>
