@@ -19,6 +19,11 @@ import org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests;
  * <p>Counters are JVM-global (the filter cannot reach a test instance) and cleared by {@code
  * BaseBpmIT}'s {@code beforeEach} and by {@code EngineChaosExtension}.
  *
+ * <p><strong>No parallel execution.</strong> Because this state is JVM-global, a test that uses
+ * it must not run concurrently with any other test: mark its class {@code @Isolated} (JUnit's
+ * {@code org.junit.jupiter.api.parallel.Isolated}) when the suite enables JUnit parallel
+ * execution.
+ *
  * @see EngineOutageFilter
  * @author Yusuf BOZKURT
  */

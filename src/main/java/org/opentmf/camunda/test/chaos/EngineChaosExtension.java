@@ -18,6 +18,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * class MyWorkerResilienceIT { ... }
  * }</pre>
  *
+ * <p>Cleanup between tests does not make concurrent tests safe: while one test's outage or clock
+ * jump is active, every other test in the JVM sees it. With JUnit parallel execution enabled,
+ * mark each chaos test class {@code @Isolated}.
+ *
  * @author Yusuf BOZKURT
  */
 public class EngineChaosExtension implements AfterEachCallback {

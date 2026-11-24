@@ -33,6 +33,11 @@ import org.cibseven.bpm.engine.impl.util.ClockUtil;
  * into a neighbouring test. Jump forward only: the engine tolerates a rewound clock poorly
  * (already-acquired jobs, history ordering), so {@link #jumpBy(Duration)} refuses negatives.
  *
+ * <p><strong>No parallel execution.</strong> Because this state is JVM-global, a test that uses
+ * it must not run concurrently with any other test: mark its class {@code @Isolated} (JUnit's
+ * {@code org.junit.jupiter.api.parallel.Isolated}) when the suite enables JUnit parallel
+ * execution.
+ *
  * @author Yusuf BOZKURT
  */
 // java.util.Date is not a choice here: ClockUtil's whole API (setCurrentTime/getCurrentTime/

@@ -314,6 +314,21 @@ else:
 class MyWorkerResilienceIT { ... }
 ```
 
+**Chaos tests must not run in parallel.** `EngineOutage`, `ExternalTaskProbe` and `EngineClock`
+hold JVM-global state (the REST filter cannot reach a test instance), so while one test's outage
+or clock jump is active, every other test in the same JVM sees it — chaos test or not. The
+framework's cleanup between tests does not change that. If your suite sets
+`junit.jupiter.execution.parallel.enabled=true`, mark every class that uses the chaos toolkit
+`@Isolated` (`org.junit.jupiter.api.parallel.Isolated`), which runs it with no other test
+alongside. A `@ResourceLock` is not enough on its own: it only serializes the tests that share
+the lock, and an outage also hits the tests that do not touch the toolkit.
+
+```java
+@Isolated
+@CamundaIT
+class MyWorkerResilienceIT extends BaseBpmIT { ... }
+```
+
 **A note on test contexts — declare every IT with `@CamundaIT`:** if two IT classes declare
 different `@SpringBootTest` attributes, Spring boots TWO application contexts that share the same
 Testcontainers database (an identical `jdbc:tc` URL reuses the container) — and the first
