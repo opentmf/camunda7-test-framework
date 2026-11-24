@@ -26,6 +26,11 @@ All notable changes to this project will be documented in this file.
 - **Spring Boot 4.2.0** (was 4.1.1), GraalVM polyglot/JS 25.6.5.1 (was 25.3.4.1), ArchUnit 1.5.1;
   build plugins: compiler 3.16.0, deploy 3.2.0, enforcer 3.7.0, surefire/failsafe 3.6.1,
   JaCoCo 0.8.16, sonar-maven-plugin 5.9.0.7382, central-publishing 0.12.0.
+- **`ExternalTaskProbe.queueDepth(topic)` no longer counts locked tasks**, as its javadoc already
+  said: a task a worker holds is not waiting. A task whose lock has expired is counted again. The
+  old total is available as the new `ExternalTaskProbe.taskCount(topic)`. A test that reads
+  `queueDepth` while a worker holds the task now sees a lower number; a test that reads it before
+  any lock is taken, or during an engine outage, sees the same number as before.
 
 ### Fixed
 

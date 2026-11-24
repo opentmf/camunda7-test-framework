@@ -167,7 +167,10 @@ class ChaosToolkitIT extends BaseBpmIT {
 
     var taskForA = LockSteward.lockAs("worker-A", TOPIC_LOCK_ARENA);
     String contestedTaskId = taskForA.getId();
+    assertEquals(0, ExternalTaskProbe.queueDepth(TOPIC_LOCK_ARENA), "a locked task is not waiting");
+    assertEquals(1, ExternalTaskProbe.taskCount(TOPIC_LOCK_ARENA), "but it still exists");
     LockSteward.expireLock(contestedTaskId);
+    assertEquals(1, ExternalTaskProbe.queueDepth(TOPIC_LOCK_ARENA), "an expired lock waits again");
     var taskForB = LockSteward.stealAs("worker-B", TOPIC_LOCK_ARENA);
     assertEquals(contestedTaskId, taskForB.getId());
 

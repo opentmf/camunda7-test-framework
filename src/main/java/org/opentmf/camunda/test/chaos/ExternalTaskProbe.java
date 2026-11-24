@@ -13,7 +13,8 @@ import org.cibseven.bpm.engine.test.assertions.bpmn.BpmnAwareTests;
  * the in-JVM proxy for what a queue-driven autoscaler would see in production.
  *
  * <p>{@link #queueDepth(String)} completes the picture from the engine side: how many external
- * tasks are waiting on a topic right now — the very number a scaler reacts to.
+ * tasks are waiting on a topic right now — the very number a scaler reacts to. {@link
+ * #taskCount(String)} counts every task on the topic, locked or not.
  *
  * <p>Counters are JVM-global (the filter cannot reach a test instance) and cleared by {@code
  * BaseBpmIT}'s {@code beforeEach} and by {@code EngineChaosExtension}.
@@ -58,9 +59,26 @@ public final class ExternalTaskProbe {
 
   /**
    * How many external tasks are waiting on the given topic right now, straight from the engine —
-   * the queue a production autoscaler would be watching.
+   * the queue a production autoscaler would be watching. A task a worker holds locked is not
+   * waiting and is not counted; a task whose lock has expired is waiting again and is counted.
+   *
+   * @see #taskCount(String)
    */
   public static long queueDepth(String topicName) {
+    return BpmnAwareTests.externalTaskService()
+        .createExternalTaskQuery()
+        .topicName(topicName)
+        .notLocked()
+        .count();
+  }
+
+  /**
+   * How many external tasks exist on the given topic right now, locked or not, straight from the
+   * engine.
+   *
+   * @see #queueDepth(String)
+   */
+  public static long taskCount(String topicName) {
     return BpmnAwareTests.externalTaskService()
         .createExternalTaskQuery()
         .topicName(topicName)

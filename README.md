@@ -256,6 +256,10 @@ assertTrue(ExternalTaskProbe.fetchAndLockAttempts() > before); // the client nev
 assertEquals(1, ExternalTaskProbe.queueDepth("myTopic"));      // the autoscaler's number
 ```
 
+`queueDepth(topic)` counts the tasks that are **waiting**: a task a worker holds locked is not
+counted, a task whose lock has expired is. `taskCount(topic)` counts every task on the topic,
+locked or not.
+
 #### Clock jumps — `EngineClock`
 
 Timer events, follow-up dates and retry back-offs all read the engine clock. Jump it forward and
