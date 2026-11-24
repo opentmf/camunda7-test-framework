@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [2.1.1] - 2026-11-21
 
+### Added
+
+- `@CamundaIT`, a meta-annotation carrying `@SpringBootTest(webEnvironment = DEFINED_PORT)`: the
+  supported way to declare an integration test that extends `BaseBpmIT`, so that every IT class
+  shares one application context. Existing `@SpringBootTest` declarations keep working. The
+  library now depends on `spring-boot-test` (managed by Spring Boot) for it.
+
 ### Changed
 
 - **CibSeven 3.0.0** (was 2.2.0). The embedded engine, the REST and external-task-client

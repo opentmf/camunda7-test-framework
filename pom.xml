@@ -187,6 +187,11 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
     </dependency>
+    <dependency>
+      <!-- for @CamundaIT, which carries @SpringBootTest -->
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-test</artifactId>
+    </dependency>
 
     <!-- Test dependencies -->
     <dependency>

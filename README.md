@@ -63,12 +63,14 @@ Below is a simple example of how to use the helper in your integration tests:
 import java.util.Map;
 import java.util.UUID;
 
+import org.opentmf.camunda.test.integration.BaseBpmIT;
+import org.opentmf.camunda.test.integration.CamundaIT;
 import org.opentmf.camunda.test.model.EventType;
 
 import static org.opentmf.camunda.test.util.CamundaExpectationUtil.registerTaskExecutionListener;
 import static org.opentmf.camunda.test.util.CamundaExpectationUtil.registerMessageCatchExecutionListener;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@CamundaIT
 class MyBpmFlowIT extends BaseBpmIT {
 
   private static final String TASK_ID_RECEIVE_TASK = "myReceiveTaskId";
@@ -312,11 +314,14 @@ else:
 class MyWorkerResilienceIT { ... }
 ```
 
-**A note on test contexts:** if two IT classes declare different `@SpringBootTest` attributes,
-Spring boots TWO application contexts that share the same Testcontainers database (an identical
-`jdbc:tc` URL reuses the container) — and the first context's still-live job executor will race
-the second class's jobs. Declare identical attributes so the TestContext cache serves ONE
-context; the suite also gets significantly faster.
+**A note on test contexts — declare every IT with `@CamundaIT`:** if two IT classes declare
+different `@SpringBootTest` attributes, Spring boots TWO application contexts that share the same
+Testcontainers database (an identical `jdbc:tc` URL reuses the container) — and the first
+context's still-live job executor will race the second class's jobs. `@CamundaIT` carries the one
+set of attributes (`webEnvironment = DEFINED_PORT`), so the TestContext cache serves ONE context
+and the classes cannot diverge; the suite also gets significantly faster. Put the port and other
+settings in your test `application.yml`, not on the annotation. A class that still declares
+`@SpringBootTest(webEnvironment = DEFINED_PORT)` itself keeps working and shares that context.
 
 ### Overview of Key Classes
 

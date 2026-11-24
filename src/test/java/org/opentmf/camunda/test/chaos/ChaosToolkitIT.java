@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.opentmf.camunda.test.clock.EngineClock;
 import org.opentmf.camunda.test.integration.BaseBpmIT;
+import org.opentmf.camunda.test.integration.CamundaIT;
 import org.opentmf.camunda.test.lock.LockSteward;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
@@ -29,14 +29,8 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
  * outages that starve the client without killing the engine, probes that show the client kept
  * trying, a clock that makes a two-hour timer due in milliseconds, and deterministic lock loss.
  */
-// Same @SpringBootTest attributes as BpmnTaskParseListenerPluginIT ON PURPOSE: the Spring
-// TestContext cache then serves ONE application context (one engine, one job executor) to both
-// classes. A second context on another port shares the same Testcontainers database (identical
-// jdbc:tc URL = same container), and its still-live job executor races this class's jobs — the
-// async ones lose their one-shot expectations to a competitor engine and the suite goes red.
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = "desired.port=8999")
+// @CamundaIT, like every IT here: one application context for all of them (see its javadoc).
+@CamundaIT
 class ChaosToolkitIT extends BaseBpmIT {
 
   private static final String PDK_EXTERNAL_PROBE = "WF_Chaos_ExternalProbe";
