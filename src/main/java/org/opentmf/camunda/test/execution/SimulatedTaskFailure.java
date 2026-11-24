@@ -7,7 +7,7 @@ import org.cibseven.bpm.engine.ProcessEngineException;
  * a test log says "this failure was scripted" instead of looking like a genuine bug, and so the
  * engine treats it exactly like any other delegate failure (job retry, then incident).
  *
- * @see org.opentmf.camunda.test.builder.BaseTaskExpectationBuilder#withFailure(String)
+ * @see org.opentmf.camunda.test.builder.TaskExpectationBuilder#withFailure(String)
  * @author Yusuf BOZKURT
  */
 public class SimulatedTaskFailure extends ProcessEngineException {
